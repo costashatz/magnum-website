@@ -195,7 +195,37 @@ function fetchLatestAppveyorJobs(project, branch) {
     req.send();
 }
 
+function fetchLatestCoverallsJobs(project, branch) {
+    var req = window.XDomainRequest ? new XDomainRequest() : new XMLHttpRequest();
+    if(!req) return;
+
+    req.open("GET", 'https://coveralls.io/github/' + project + '.json?branch=' + branch, true);
+    req.responseType = 'json';
+    req.onreadystatechange = function() {
+        if(req.readyState != 4) return;
+
+        //console.log(req.response);
+
+        var repo = req.response['repo_name'];
+        var id = 'coverage-' + repo;
+        var elem = document.getElementById(id);
+
+        var coverage = Math.round(req.response['covered_percent']);
+        var type;
+        if(coverage > 95) type = 'm-success';
+        else if(coverage > 80) type = 'm-warning';
+        else type = 'm-danger';
+
+        var age = timeDiff(new Date(Date.parse(req.response['created_at'])), new Date(Date.now()));
+
+        elem.innerHTML = '<a href="https://coveralls.io/github/' + repo + '" title="@ ' + req.response['created_at'] + '">' + Math.round(req.response['covered_percent']) + '%<br />' + age + '</a>';
+        elem.className = type;
+    };
+    req.send();
+}
+
 for(var i = 0; i != projects.length; ++i) {
+    fetchLatestCoverallsJobs(projects[i][0], projects[i][1]);
     fetchLatestTravisJobs(projects[i][0], projects[i][1]);
     fetchLatestAppveyorJobs(projects[i][0], projects[i][1]);
 }
