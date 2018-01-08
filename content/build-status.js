@@ -1,11 +1,12 @@
-var projects = [['mosra/corrade', 'master'],
-                ['mosra/magnum', 'master'],
-                ['mosra/magnum-plugins', 'master'],
-                ['mosra/magnum-extras', 'master'],
-                ['mosra/magnum-integration', 'master'],
-                ['mosra/magnum-examples', 'master'],
-                ['mosra/magnum-examples', 'ports'],
-                ['mosra/magnum-bootstrap', 'master']];
+/* Third value is whether to fetch coverage */
+var projects = [['mosra/corrade', 'master', true],
+                ['mosra/magnum', 'master', true],
+                ['mosra/magnum-plugins', 'master', true],
+                ['mosra/magnum-extras', 'master', true],
+                ['mosra/magnum-integration', 'master', true],
+                ['mosra/magnum-examples', 'master', false],
+                ['mosra/magnum-examples', 'ports', false],
+                ['mosra/magnum-bootstrap', 'master', false]];
 var latestTravisJobs = [];
 var travisDone = 0;
 var travisJobIdRe = /JOBID=([a-zA-Z0-9-]+)/
@@ -199,7 +200,8 @@ function fetchLatestCoverallsJobs(project, branch) {
     var req = window.XDomainRequest ? new XDomainRequest() : new XMLHttpRequest();
     if(!req) return;
 
-    req.open("GET", 'https://coveralls.io/github/' + project + '.json?branch=' + branch, true);
+    /* Need to circumvent CORS using a proxy. Ugh. */
+    req.open("GET", 'https://cors-anywhere.herokuapp.com/https://coveralls.io/github/' + project + '.json?branch=' + branch, true);
     req.responseType = 'json';
     req.onreadystatechange = function() {
         if(req.readyState != 4) return;
@@ -207,6 +209,7 @@ function fetchLatestCoverallsJobs(project, branch) {
         //console.log(req.response);
 
         var repo = req.response['repo_name'];
+        repo = repo.substr(repo.indexOf('/') + 1);
         var id = 'coverage-' + repo;
         var elem = document.getElementById(id);
 
@@ -225,7 +228,7 @@ function fetchLatestCoverallsJobs(project, branch) {
 }
 
 for(var i = 0; i != projects.length; ++i) {
-    fetchLatestCoverallsJobs(projects[i][0], projects[i][1]);
+    if(projects[i][2]) fetchLatestCoverallsJobs(projects[i][0], projects[i][1]);
     fetchLatestTravisJobs(projects[i][0], projects[i][1]);
     fetchLatestAppveyorJobs(projects[i][0], projects[i][1]);
 }
